@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 ------------------------------------------------------------------------------------------
@@ -41,3 +42,7 @@ TIME_WAITING
 O estado TIME_WAIT que você está vendo é comum e normal no Windows e em redes TCP/IP. Ele indica que conexões recentes foram encerradas corretamente, mas o sistema operacional está "esperando" um pouco para garantir que nenhum pacote antigo se perca antes de liberar completamente a porta.
 
 ------------------------------------------------------------------------------------------
+=======
+# Lost-In-The-Void
+"Lost In The Void" é um jogo de RPG por turnos desenvolvido por mim. Além de ser um ótimo passatempo, ele me estimula a aprender assuntos cada vez mais difíceis e específicos.
+>>>>>>> 4547e2d663b1c08bde8db99db985448185e78fd3
