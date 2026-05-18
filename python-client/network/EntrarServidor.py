@@ -14,7 +14,7 @@ def ConectarComServidor():
         # enviar dados
         client.sendall(b'{"type":"MOVE"}\n')
     
-        # 3. ESPERAR RESPOSTA DO SERVIDOR (Crucial!)
+        # ESPERAR RESPOSTA DO SERVIDOR (Crucial!)
         # O servidor deve enviar algo de volta
         # O timeout evita que o programa trave se o servidor ficar calado
         client.settimeout(5.0)  # Espera no máximo 5 segundos
@@ -25,7 +25,7 @@ def ConectarComServidor():
         if not resposta:
             return "ERRO - Conexão fechada, servidor nao respondeu. \n"
         
-        # 4. Verificar se a resposta indica sucesso
+        # Verificar se a resposta indica sucesso
         resposta_str = resposta.decode('utf-8').strip()
         
 

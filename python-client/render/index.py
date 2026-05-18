@@ -3,7 +3,6 @@
 # Descrição: Cliente Python para renderização de interface em terminal usando curses.
 # Autor: [Julio Miguel C.K.]
 
-
 # Importações necessárias
 import curses
 from curses import wrapper
@@ -16,58 +15,28 @@ import threading
 
 
 
-
-
-
-
-
-
-def safe_addstr(win, y, x, text, attr=0):
-    if text is None:
-        text = ""
-    try:
-        max_y, max_x = win.getmaxyx()
-        if y < 0 or y >= max_y or x < 0 or x >= max_x:
-            return
-        text = str(text)
-        max_len = max_x - x
-        if max_len <= 0:
-            return
-        win.addstr(y, x, text[:max_len], attr)
-    except curses.error:
-        pass
-
-# -------------------------------------------
-
-
-
-
-
-def DesenharLayout(stdscr):
-
-    # limpa tela
-    stdscr.clear()
-    
-    # Variaveis iniciais
+# Inicializa as cores da aplicacao
+def inicializarCores(stdscr):
     curses.start_color()
     curses.use_default_colors()
+
+    # Define a cor padrao(foreground - verde | background - preto)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    global SCREEN_BORDER_COLOR
-    SCREEN_BORDER_COLOR = curses.color_pair(1)
+    global COR_PADRAO
+    COR_PADRAO = curses.color_pair(1)
 
+    # Define a cor padrao(foreground - verde | background - preto)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-    global ENEMY_COLOR
-    ENEMY_COLOR = curses.color_pair(2)
+    global COR_INIMIGO
+    COR_INIMIGO = curses.color_pair(2)
 
-    # Configuracoes iniciais da tela
 
+
+def inicializarVariaveisDeTela(stdscr):
     global alturaTela
     global larguraTela  
     global tercoTela
-
-    alturaTela = 0
-    larguraTela = 0
-
+    
     alturaTela, larguraTela = stdscr.getmaxyx()
     alturaTela -= 1
     larguraTela -= 2
@@ -75,171 +44,236 @@ def DesenharLayout(stdscr):
     tercoTela = larguraTela // 3
 
 
-    alturaMenu = tercoTela
-    larguraMenu = tercoTela
+
+
+def DesenharLayout(stdscr):
+    global alturaTela
+    global larguraTela  
+    global tercoTela
+
+    # Inicialiva variaveis para a posicao do layout(bordas)
+    yLayout = 0
+    xLayout = 0
 
 
     global opcoes
     opcoes = ["Conectar ao servidor", "Configurações", "Sair"]
 
-    # CRIAR BACKGROUND 
-    stdscr.addstr(0, 0, "┌", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, 0, "└", SCREEN_BORDER_COLOR)
-    stdscr.addstr(0, larguraTela, "┐", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, larguraTela, "┘", SCREEN_BORDER_COLOR)
+    # Desenha as bordas do layout
+    stdscr.addstr(yLayout, xLayout, "┌", COR_PADRAO)
+    stdscr.addstr(alturaTela, xLayout, "└", COR_PADRAO)
+    stdscr.addstr(yLayout, larguraTela, "┐", COR_PADRAO)
+    stdscr.addstr(alturaTela, larguraTela, "┘", COR_PADRAO)
+    stdscr.refresh()
 
+    # Desenha as linhas verticais do layout
+    for i in range(1, alturaTela):
+        stdscr.addstr(i, xLayout, "│", COR_PADRAO)
+        stdscr.addstr(i, larguraTela, "│", COR_PADRAO)
+    stdscr.refresh()
     
-    i = 1
-    while i < alturaTela:
-        stdscr.addstr(i, 0, "│", SCREEN_BORDER_COLOR)
-        stdscr.addstr(i, larguraTela, "│", SCREEN_BORDER_COLOR)
-        i += 1
-    
-    
-    i = 1
-    while i < larguraTela:
-        stdscr.addstr(0, i, "─", SCREEN_BORDER_COLOR)
-        stdscr.addstr(alturaTela, i, "─", SCREEN_BORDER_COLOR)
-        i += 1
-    
-    alturaTela -= 1
-    larguraTela -= 2
-
-
-
-
-    # adiciona os paineis
-
-    # painel esquerda
-    stdscr.addstr(1, 1, "┌", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, 1, "└", SCREEN_BORDER_COLOR)
-    stdscr.addstr(1, tercoTela, "┐", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, tercoTela, "┘", SCREEN_BORDER_COLOR)
-
-    i = 2
-    while i < alturaTela:
-        stdscr.addstr(i, 1, "│", SCREEN_BORDER_COLOR)
-        stdscr.addstr(i, tercoTela, "│", SCREEN_BORDER_COLOR)
-        i += 1
+    # Desenha as linhas horizontais do layout
+    for i in range(1, larguraTela):
+        stdscr.addstr(yLayout, i, "─", COR_PADRAO)
+        stdscr.addstr(alturaTela, i, "─", COR_PADRAO)
+    stdscr.refresh()
     
 
 
-    i = 2
-    while i < tercoTela:
-        stdscr.addstr(1, i, "─", SCREEN_BORDER_COLOR)
-        stdscr.addstr(alturaTela, i, "─", SCREEN_BORDER_COLOR)
-        i += 1
+def DesenharPainelEsquerdo(stdscr):
+    global alturaTela
+    global larguraTela
+    global tercoTela
 
+    # Inicialiva variaveis para a posicao do painel esquerdo
+    ypainelEsquerdo = 1
+    xpainelEsquerdo = 1
 
-
-
-
-    # painel direita
-
-    stdscr.addstr(1, tercoTela * 2, "┌", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, tercoTela * 2, "└", SCREEN_BORDER_COLOR)
-    stdscr.addstr(1, larguraTela, "┐", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, larguraTela, "┘", SCREEN_BORDER_COLOR)
-            
-
-    i = 2
-    while i < alturaTela:
-        stdscr.addstr(i, tercoTela * 2, "│", SCREEN_BORDER_COLOR)
-        stdscr.addstr(i, larguraTela, "│", SCREEN_BORDER_COLOR)
-        i += 1
+    alturaPainelEsquerdo = alturaTela - 1
+    larguraPainelEsquerdo = tercoTela
     
 
+    # Desenha as bordas do painel esquerdo
+    stdscr.addstr(ypainelEsquerdo, xpainelEsquerdo, "┌", COR_PADRAO)
+    stdscr.addstr(alturaPainelEsquerdo, xpainelEsquerdo, "└", COR_PADRAO)
+    stdscr.addstr(ypainelEsquerdo, larguraPainelEsquerdo, "┐", COR_PADRAO)
+    stdscr.addstr(alturaPainelEsquerdo, larguraPainelEsquerdo, "┘", COR_PADRAO)
+    stdscr.refresh()
 
-    i = tercoTela * 2 +1
-    while i < larguraTela:
-        stdscr.addstr(1, i, "─", SCREEN_BORDER_COLOR)
-        stdscr.addstr(alturaTela, i, "─", SCREEN_BORDER_COLOR)
-        i += 1
+    # Desenha as linhas verticais do painel esquerdo
+    for i in range(2, alturaPainelEsquerdo):
+        stdscr.addstr(i, xpainelEsquerdo, "│", COR_PADRAO)
+        stdscr.addstr(i, larguraPainelEsquerdo, "│", COR_PADRAO)
+    stdscr.refresh()
 
-
-
-
-
-    # painel meio-cima
-
-    alturaTela = alturaTela // 2
-    
-    stdscr.addstr(1, tercoTela + 1, "┌", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, tercoTela + 1, "└", SCREEN_BORDER_COLOR)
-    stdscr.addstr(1, tercoTela * 2 - 1, "┐", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela, tercoTela * 2 - 1, "┘", SCREEN_BORDER_COLOR)
-
-    i = 2
-    while i < alturaTela:
-        stdscr.addstr(i, tercoTela + 1, "│", SCREEN_BORDER_COLOR)
-        stdscr.addstr(i, tercoTela * 2 -1, "│", SCREEN_BORDER_COLOR)
-        i += 1
-    
+    # Desenha as linhas horizontais do painel esquerdo
+    for i in range(2, tercoTela):
+        stdscr.addstr(ypainelEsquerdo, i, "─", COR_PADRAO)
+        stdscr.addstr(alturaPainelEsquerdo, i, "─", COR_PADRAO)
+    stdscr.refresh()
 
 
-    i = tercoTela + 2
-    while i < tercoTela * 2 - 1:
-        stdscr.addstr(1, i, "─", SCREEN_BORDER_COLOR)
-        stdscr.addstr(alturaTela, i, "─", SCREEN_BORDER_COLOR)
-        i += 1
+    # Inicialiva variaveis para a posicao da Janela do painel esquerdo
+    global janelaEsquerda
+    global alturaJanelaEsquerda
+    global larguraJanelaEsquerda
 
+    yjanelaEsquerda = 2
+    xjanelaEsquerda = 3
 
-
-
-
-    # painel meio-baixo
-    
-    stdscr.addstr(alturaTela + 1, tercoTela + 1, "┌", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela * 2 + 1, tercoTela + 1, "└", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela + 1, tercoTela * 2 - 1, "┐", SCREEN_BORDER_COLOR)
-    stdscr.addstr(alturaTela * 2 + 1, tercoTela * 2 - 1, "┘", SCREEN_BORDER_COLOR)
-
-
-    i = alturaTela + 2 
-    while i < alturaTela * 2 + 1:
-        stdscr.addstr(i, tercoTela + 1, "│", SCREEN_BORDER_COLOR)
-        stdscr.addstr(i, tercoTela * 2 -1, "│", SCREEN_BORDER_COLOR)
-        i += 1
-    
-
-
-    i = tercoTela + 2
-    while i < tercoTela * 2 - 1:
-        stdscr.addstr(alturaTela + 1, i, "─", SCREEN_BORDER_COLOR)
-        stdscr.addstr(alturaTela *2 + 1, i, "─", SCREEN_BORDER_COLOR)
-        i += 1
+    alturaJanelaEsquerda = alturaTela - 3
+    larguraJanelaEsquerda = tercoTela - 3
 
     # Cria as janelas para cada painel
-    color = SCREEN_BORDER_COLOR
+    janelaEsquerda = curses.newwin(alturaJanelaEsquerda,larguraJanelaEsquerda,yjanelaEsquerda,xjanelaEsquerda)
 
 
-    global janelaEsquerda
+
+def DesenharPainelDireito(stdscr):
+    global alturaTela
+    global larguraTela
+    global tercoTela
+
+    # Inicialiva variaveis para a posicao do painel direito
+    ypainelDireito = 1
+    xpainelDireito = tercoTela * 2
+
+    alturaPainelDireito = alturaTela - 1
+    larguraPainelDireito = larguraTela - 2
+
+    
+    # Desenha as bordas do painel direito
+    stdscr.addstr(ypainelDireito, xpainelDireito, "┌", COR_PADRAO)
+    stdscr.addstr(alturaPainelDireito, xpainelDireito, "└", COR_PADRAO)
+    stdscr.addstr(ypainelDireito, larguraPainelDireito, "┐", COR_PADRAO)
+    stdscr.addstr(alturaPainelDireito, larguraPainelDireito, "┘", COR_PADRAO)
+    stdscr.refresh()
+            
+    # Desenha as linhas verticais do painel direito
+    for i in range(2, alturaPainelDireito):
+        stdscr.addstr(i, xpainelDireito, "│", COR_PADRAO)
+        stdscr.addstr(i, larguraPainelDireito, "│", COR_PADRAO)
+    stdscr.refresh()
+
+    # Desenha as linhas horizontais do painel direito
+    for i in range(xpainelDireito + 1, larguraPainelDireito):
+        stdscr.addstr(ypainelDireito, i, "─", COR_PADRAO)
+        stdscr.addstr(alturaPainelDireito, i, "─", COR_PADRAO)
+    stdscr.refresh()
+
+
+    # Inicialiva variaveis para a posicao da Janela do painel direito
     global janelaDireita
+    global alturaJanelaDireita
+    global larguraJanelaDireita
+
+    yjanelaDireita = 2
+    xjanelaDireita = tercoTela * 2 + 2
+
+    alturaJanelaDireita = alturaTela - 3
+    larguraJanelaDireita = tercoTela - 2
+
+    # Cria as janelas para cada painel
+    janelaDireita = curses.newwin(alturaJanelaDireita,larguraJanelaDireita,yjanelaDireita,xjanelaDireita)
+
+
+
+def DesenharPainelMeioCima(stdscr):
+    global alturaTela
+    global larguraTela
+    global tercoTela
+
+    # Inicialiva variaveis para a posicao do painel do meio-cima
+    ypainelMeioCima = 1
+    xpainelMeioCima = tercoTela + 1
+
+    alturaPainelMeioCima = (alturaTela // 2) - 1
+    larguraPainelMeioCima = (tercoTela * 2) - 1
+
+
+    # Desenha as bordas do painel do meio-cima
+    stdscr.addstr(ypainelMeioCima, xpainelMeioCima, "┌", COR_PADRAO)
+    stdscr.addstr(alturaPainelMeioCima, xpainelMeioCima, "└", COR_PADRAO)
+    stdscr.addstr(ypainelMeioCima, larguraPainelMeioCima, "┐", COR_PADRAO)
+    stdscr.addstr(alturaPainelMeioCima, larguraPainelMeioCima, "┘", COR_PADRAO)
+    stdscr.refresh()
+
+    # Desenha as linhas verticais do painel do meio-cima
+    for i in range(2, alturaPainelMeioCima):
+        stdscr.addstr(i, xpainelMeioCima, "│", COR_PADRAO)
+        stdscr.addstr(i, larguraPainelMeioCima, "│", COR_PADRAO)
+    stdscr.refresh()
+
+    # Desenha as linhas horizontais do painel do meio-cima
+    for i in range(xpainelMeioCima + 1, larguraPainelMeioCima):
+        stdscr.addstr(ypainelMeioCima, i, "─", COR_PADRAO)
+        stdscr.addstr(alturaPainelMeioCima, i, "─", COR_PADRAO)
+    stdscr.refresh()
+
+
+    # Inicialiva variaveis para a posicao da Janela do painel do meio-cima
     global janelaMeioCima
+    global alturaJanelaMeioCima
+    global larguraJanelaMeioCima
+
+    yjanelaMeioCima = 2
+    xjanelaMeioCima = tercoTela + 3
+
+    alturaJanelaMeioCima = alturaTela // 2 - 3
+    larguraJanelaMeioCima = tercoTela - 4
+
+    # Cria as janelas para cada painel
+    janelaMeioCima = curses.newwin(alturaJanelaMeioCima,larguraJanelaMeioCima,yjanelaMeioCima,xjanelaMeioCima)
+
+
+
+def DesenharPainelMeioBaixo(stdscr):
+    global alturaTela
+    global larguraTela
+    global tercoTela
+
+    # Inicialiva variaveis para a posicao do painel do meio-bai
+    ypainelMeioCima = (alturaTela // 2) 
+    xpainelMeioCima = tercoTela + 1
+
+    alturaPainelMeioCima = alturaTela - 1
+    larguraPainelMeioCima = tercoTela * 2 - 1
+
+   
+    # Desenha as bordas do painel do meio-baixo
+    stdscr.addstr(ypainelMeioCima, xpainelMeioCima, "┌", COR_PADRAO)
+    stdscr.addstr(alturaPainelMeioCima, xpainelMeioCima, "└", COR_PADRAO)
+    stdscr.addstr(ypainelMeioCima, larguraPainelMeioCima, "┐", COR_PADRAO)
+    stdscr.addstr(alturaPainelMeioCima, larguraPainelMeioCima, "┘", COR_PADRAO)
+    stdscr.refresh()
+
+    # Desenha as linhas verticais do painel do meio-baixo
+    for i in range(ypainelMeioCima + 1, alturaPainelMeioCima):
+        stdscr.addstr(i, xpainelMeioCima, "│", COR_PADRAO)
+        stdscr.addstr(i, larguraPainelMeioCima, "│", COR_PADRAO)
+    stdscr.refresh()
+
+    # Desenha as linhas horizontais do painel do meio-baixo
+    for i in range(xpainelMeioCima + 1, larguraPainelMeioCima):
+        stdscr.addstr(ypainelMeioCima, i, "─", COR_PADRAO)
+        stdscr.addstr(alturaPainelMeioCima, i, "─", COR_PADRAO)
+    stdscr.refresh()
+
+
+    # Inicialiva variaveis para a posicao da Janela do painel do meio-baixo
     global janelaMeioBaixo
+    global alturaJanelaMeioBaixo
+    global larguraJanelaMeioBaixo
 
-    global larguraTelaMeioCima
-    global alturaTelaMeioCima
-    
-    
+    yjanelaMeioBaixo = (alturaTela // 2) + 1
+    xjanelaMeioBaixo = tercoTela + 3
 
-    janelaEsquerda = curses.newwin(alturaTela * 2 - 1, tercoTela - 3, 2, 3)
-    alturaTelaEsquerda, larguraTelaEsquerda = janelaEsquerda.getmaxyx()
+    alturaJanelaMeioBaixo = alturaTela // 2 - 2
+    larguraJanelaMeioBaixo = tercoTela - 4
 
+    # Cria as janelas para cada painel
+    janelaMeioBaixo = curses.newwin(alturaJanelaMeioBaixo,larguraJanelaMeioBaixo,yjanelaMeioBaixo,xjanelaMeioBaixo)
 
-    janelaDireita = curses.newwin(alturaTela * 2 - 1, tercoTela - 2, 2, tercoTela * 2 + 2)
-    alturaTelaDireita, larguraTelaDireita = janelaDireita.getmaxyx()
-
-
-    janelaMeioCima = curses.newwin(alturaTela - 2, tercoTela - 4, 2, tercoTela + 3)
-    alturaTelaMeioCima, larguraTelaMeioCima = janelaMeioCima.getmaxyx()
-
-
-    janelaMeioBaixo = curses.newwin(alturaTela - 1, tercoTela - 4, alturaTela + 2, tercoTela + 3)
-    alturaTelaMeioBaixo, larguraTelaMeioBaixo = janelaMeioBaixo.getmaxyx()
-
-    
-    
 
 
 def MostrarEventos(stdscr):
@@ -352,7 +386,7 @@ def MostrarEventos(stdscr):
         try:
             # Trunca a linha se for maior que a janela (sem remover espaços importantes)
             linha_exibir = linha[:largura_disponivel - x_start]
-            janelaMeioCima.addstr(y_start + i, x_start, linha_exibir, ENEMY_COLOR)
+            janelaMeioCima.addstr(y_start + i, x_start, linha_exibir, COR_INIMIGO)
             stdscr.refresh()
             janelaMeioCima.refresh()
         except curses.error:
@@ -370,7 +404,7 @@ def menu(stdscr, escolha):
 
             iniciarServidorJava(stdscr)
 
-            janelaDireita.addstr("Entrando no servidor... \n", SCREEN_BORDER_COLOR)
+            janelaDireita.addstr("Entrando no servidor... \n", COR_PADRAO)
             janelaDireita.refresh()
             stdscr.refresh()
 
@@ -388,20 +422,20 @@ def menu(stdscr, escolha):
                 if teste:
                     try:
                         #janelaDireita.erase()
-                        janelaDireita.addstr(teste, SCREEN_BORDER_COLOR)
+                        janelaDireita.addstr(teste, COR_PADRAO)
                         janelaDireita.refresh()
                         stdscr.refresh()
                     except Exception as e:
-                        janelaDireita.addstr(f"Erro ao exibir: {e} \n", SCREEN_BORDER_COLOR)
+                        janelaDireita.addstr(f"Erro ao exibir: {e} \n", COR_PADRAO)
                         janelaDireita.refresh()
                         stdscr.refresh()
 
             except ImportError as e:
-                janelaDireita.addstr(f"Erro de importação: {e} \n", SCREEN_BORDER_COLOR)
+                janelaDireita.addstr(f"Erro de importação: {e} \n", COR_PADRAO)
                 janelaDireita.refresh()
                 stdscr.refresh()
             except Exception as e:
-                janelaDireita.addstr(f"Erro: {e}", SCREEN_BORDER_COLOR)
+                janelaDireita.addstr(f"Erro: {e}", COR_PADRAO)
                 janelaDireita.refresh()
                 stdscr.refresh()
 
@@ -455,7 +489,7 @@ def iniciarServidorJava(stdscr):
     time.sleep(1) # Pequena pausa para o SO liberar a porta
 
     try:
-        janelaDireita.addstr(f"Iniciando servidor Java na porta {PORTA}... \n", SCREEN_BORDER_COLOR)
+        janelaDireita.addstr(f"Iniciando servidor Java na porta {PORTA}... \n", COR_PADRAO)
         janelaDireita.refresh()
         stdscr.refresh()
 
@@ -493,9 +527,9 @@ def iniciarServidorJava(stdscr):
                 # Processo morreu
                 stderr_val = process1.stderr.read()
                 if "BindException" in stderr_val:
-                    janelaDireita.addstr(f"Erro: Porta {PORTA} ainda ocupada após tentar liberar. \n", SCREEN_BORDER_COLOR)
+                    janelaDireita.addstr(f"Erro: Porta {PORTA} ainda ocupada após tentar liberar. \n", COR_PADRAO)
                 else:
-                    janelaDireita.addstr(f"Erro inesperado: {stderr_val[:200]} \n", SCREEN_BORDER_COLOR)
+                    janelaDireita.addstr(f"Erro inesperado: {stderr_val[:200]} \n", COR_PADRAO)
                 return False
             
             if "START" in output_log:
@@ -509,22 +543,22 @@ def iniciarServidorJava(stdscr):
             if process1.poll() is None:
                  # Timeout
                  process1.terminate()
-                 janelaDireita.addstr(f"Erro: Servidor Java não respondeu em {timeout_limit}s. \n", SCREEN_BORDER_COLOR)
+                 janelaDireita.addstr(f"Erro: Servidor Java não respondeu em {timeout_limit}s. \n", COR_PADRAO)
                  return False
             else:
                  stderr_val = process1.stderr.read()
-                 janelaDireita.addstr(f"Erro: {stderr_val[:200]} \n", SCREEN_BORDER_COLOR)
+                 janelaDireita.addstr(f"Erro: {stderr_val[:200]} \n", COR_PADRAO)
                  return False
 
         # Sucesso
-        janelaDireita.addstr("Servidor Java iniciado com sucesso! \n", SCREEN_BORDER_COLOR)
+        janelaDireita.addstr("Servidor Java iniciado com sucesso! \n", COR_PADRAO)
         janelaDireita.refresh()
         stdscr.refresh()
         time.sleep(0.5) # Garante que o socket esteja pronto
         return True
 
     except Exception as e:
-        janelaDireita.addstr(f"Erro ao iniciar servidor: {e} \n", SCREEN_BORDER_COLOR)
+        janelaDireita.addstr(f"Erro ao iniciar servidor: {e} \n", COR_PADRAO)
         return False
 
 # Nota: Certifique-se de que o Java imprima EXATAMENTE "Servidor iniciado na porta 5000!"
@@ -537,6 +571,9 @@ def MeuInicial(stdscr):
     global alturaTela
     global larguraTela  
     global tercoTela
+
+    alturaMenu = tercoTela
+    larguraMenu = tercoTela
 
     alturaTela = 0
     larguraTela = 0
@@ -551,8 +588,8 @@ def MeuInicial(stdscr):
     # Configurações iniciais da tela
     curses.start_color()
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    global SCREEN_BORDER_COLOR
-    SCREEN_BORDER_COLOR = curses.color_pair(1)
+    global COR_PADRAO
+    COR_PADRAO = curses.color_pair(1)
 
     # Configurações do cursor
     cursorEsquerdo = "> "
@@ -590,39 +627,39 @@ def MeuInicial(stdscr):
 
 
     # Configura a janela do menu
-    menuInicialWindow.bkgd(' ', SCREEN_BORDER_COLOR)
+    menuInicialWindow.bkgd(' ', COR_PADRAO)
     menuInicialWindow.border()
 
 
 
     # Adiciona os textos do menu
-    menuInicialWindow.addstr(yTitulo, xTitulo, titulo, SCREEN_BORDER_COLOR)
+    menuInicialWindow.addstr(yTitulo, xTitulo, titulo, COR_PADRAO)
     for i, opcao in enumerate(opcoes):
-        menuInicialWindow.addstr(yOpcoes + i, (int(larguraMenu - len(opcoes[i])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, "  " + opcao + "  ", SCREEN_BORDER_COLOR)
+        menuInicialWindow.addstr(yOpcoes + i, (int(larguraMenu - len(opcoes[i])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, "  " + opcao + "  ", COR_PADRAO)
     menuInicialWindow.refresh()
     stdscr.refresh()
 
-    menuInicialWindow.addstr(cursorY, (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, cursorEsquerdo + opcoes[cursorOpcao] + cursorDireito, SCREEN_BORDER_COLOR)
+    menuInicialWindow.addstr(cursorY, (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, cursorEsquerdo + opcoes[cursorOpcao] + cursorDireito, COR_PADRAO)
     menuInicialWindow.refresh()
     stdscr.refresh()
 
 
     while True:
         
-        menuInicialWindow.addstr(cursorY, (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, cursorEsquerdo + opcoes[cursorOpcao] + cursorDireito, SCREEN_BORDER_COLOR)
+        menuInicialWindow.addstr(cursorY, (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, cursorEsquerdo + opcoes[cursorOpcao] + cursorDireito, COR_PADRAO)
         menuInicialWindow.refresh()
         stdscr.refresh()
 
         key = stdscr.getkey()
 
         if key == "KEY_UP" and cursorY > 4:
-            menuInicialWindow.addstr(cursorY,  (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, "  " + opcoes[cursorOpcao] + "  ", SCREEN_BORDER_COLOR)
+            menuInicialWindow.addstr(cursorY,  (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, "  " + opcoes[cursorOpcao] + "  ", COR_PADRAO)
             menuInicialWindow.refresh()
             stdscr.refresh()
             cursorOpcao -= 1
             cursorY -= 1
         elif key == "KEY_DOWN" and cursorY < 7:
-            menuInicialWindow.addstr(cursorY, (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, "  " + opcoes[cursorOpcao] + "  ", SCREEN_BORDER_COLOR)
+            menuInicialWindow.addstr(cursorY, (int(larguraMenu - len(opcoes[cursorOpcao])) - (len(cursorEsquerdo) + len(cursorDireito)))// 2, "  " + opcoes[cursorOpcao] + "  ", COR_PADRAO)
             menuInicialWindow.refresh()
             stdscr.refresh()
             cursorOpcao += 1
@@ -651,28 +688,43 @@ def MeuInicial(stdscr):
 
 
 def main(stdscr):
-    
+
+    # Inicializa variaveis globais
+    inicializarCores(stdscr)
+    inicializarVariaveisDeTela(stdscr)
+
     MeuInicial(stdscr)
 
+    stdscr.clear()
     DesenharLayout(stdscr)
+    DesenharPainelEsquerdo(stdscr)
+    DesenharPainelDireito(stdscr)
+    DesenharPainelMeioCima(stdscr)
+    DesenharPainelMeioBaixo(stdscr)
 
+
+
+    
+    
+    
+            
 
 
     posicaoCursor = 0
     cursor = "> "
 
     for i, opcao in enumerate(opcoes):
-        janelaEsquerda.addstr(i, 0, "  " + opcao, SCREEN_BORDER_COLOR)
+        janelaEsquerda.addstr(i, 0, "  " + opcao, COR_PADRAO)
         stdscr.refresh()
         janelaEsquerda.refresh()
 
-    #janelaEsquerda.addstr(0, 0, "  " + opcoes[0] + "  ", SCREEN_BORDER_COLOR)
-    #janelaEsquerda.addstr(1, 0, "  " + opcoes[1] + "  ", SCREEN_BORDER_COLOR)
-    #janelaEsquerda.addstr(2, 0, "  " + opcoes[2] + "  ", SCREEN_BORDER_COLOR)
+    #janelaEsquerda.addstr(0, 0, "  " + opcoes[0] + "  ", COR_PADRAO)
+    #janelaEsquerda.addstr(1, 0, "  " + opcoes[1] + "  ", COR_PADRAO)
+    #janelaEsquerda.addstr(2, 0, "  " + opcoes[2] + "  ", COR_PADRAO)
 
     while True:
         
-        janelaEsquerda.addstr(posicaoCursor, 0, cursor, SCREEN_BORDER_COLOR)
+        janelaEsquerda.addstr(posicaoCursor, 0, cursor, COR_PADRAO)
         janelaEsquerda.refresh()
         stdscr.refresh()
 
@@ -693,32 +745,12 @@ def main(stdscr):
 
 
 
-    # Preenche a janela esquerda com caracteres
     
     
             
   
 
-    """
-    for i in range(alturaTelaDireita):
-        for j in range(larguraTelaDireita - 1):
-            
-            janelaDireita.addstr(i, j, "0", color)
-            stdscr.refresh()
-            janelaDireita.refresh()
     
-    
-
-
-    for i in range(alturaTelaMeioBaixo):
-        for j in range(larguraTelaMeioBaixo - 1):
-            
-            janelaMeioBaixo.addstr(i, j, "0", color)
-            stdscr.refresh()
-            janelaMeioBaixo.refresh()
-            
-        time.sleep(0.0001)
-    """
 
     
 
@@ -728,19 +760,29 @@ def main(stdscr):
 
 
 
-
-
-
-
-
-
-    # Espera um input do usuario
-    
-
     
 
 
+"""
+for i in range(alturaJanelaEsquerda):
+    for j in range(larguraJanelaEsquerda - 1):
+        
+        janelaEsquerda.addstr(i, j, "0", COR_PADRAO)
+        stdscr.refresh()
+        janelaEsquerda.refresh()
 
+
+
+
+
+for i in range(alturaJanelaMeioCima):
+    for j in range(larguraJanelaMeioCima - 1):
+        
+        janelaMeioCima.addstr(i, j, "0", COR_PADRAO)
+        stdscr.refresh()
+        janelaMeioCima.refresh()
+    time.sleep(0.1)
+"""
 
 
 
